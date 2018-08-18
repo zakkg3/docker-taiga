@@ -24,6 +24,12 @@ if [ -z "$TAIGA_SKIP_DB_CHECK" ]; then
   fi
 fi
 
+# Exit after initializing the database
+if [ ! -z "$TAIGA_DB_CHECK_ONLY" ]; then
+  echo "Requested database-check only run. Exiting."
+  exit 0
+fi
+
 # Look for static folder, if it does not exist, then generate it
 if [ ! -d "/usr/src/taiga-back/static" ]; then
   python manage.py collectstatic --noinput
@@ -55,9 +61,24 @@ elif grep -q "wss://" "/taiga/conf.json"; then
   sed -i "s/wss:\/\//ws:\/\//g" /taiga/conf.json
 fi
 
-# Start nginx service (need to start it as background process)
-# nginx -g "daemon off;"
-service nginx start
 
-# Start Taiga backend Django server
-exec "$@"
+# Start nginx service and Taiga Django server, as background shell processes
+nginx -g "daemon off;" &
+NGINX_PID=$!
+
+$@ &
+TAIGA_PID=$!
+
+# Register handler for clean termination of the processes
+signal_shutdown () {
+  echo "Received SIGTERM signal. Shutting down services..."
+  nginx -s stop
+  kill -s SIGTERM $TAIGA_PID
+  echo "Sent stop signal to all services."
+}
+trap signal_shutdown SIGTERM
+
+# Wait until both processes have exited
+wait $NGINX_PID
+wait $TAIGA_PID
+echo "All background services have exited. Terminating."
