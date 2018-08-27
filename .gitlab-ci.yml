@@ -1,0 +1,24 @@
+stages:
+- build
+
+build-dev:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: ["/busybox/sh","-c"]
+  script:
+    - mkdir -p /root/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /root/.docker/config.json
+    - executor --context $CI_PROJECT_DIR --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+
+#build-prod:
+#  stage: build
+#  image:
+#    name: gcr.io/kaniko-project/executor:debug
+#    entrypoint: ["/busybox/sh"]
+#  script:
+#    - mkdir -p /root/.docker
+#    - echo "{\"auths\":{\"$REGISTRY\":{\"auth\":\"$REGISTRY_CREDENTIALS\"}}}" > /root/.docker/config.json
+#    - /kaniko/executor --context $CI_PROJECT_DIR --destination $CI_PROJECT_NAME:$CI_COMMIT_REF_NAME
+#  only:
+#    - tags
