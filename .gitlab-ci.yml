@@ -1,15 +1,28 @@
+image: docker:stable
+
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+
+services:
+- docker:dind
+
 stages:
 - build
+#- push
 
-build-dev:
+build:
   stage: build
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: ["/busybox/sh","-c"]
+  artifacts:
+    paths:
+    - output.tgz
+    expire_in: 1h
   script:
-    - mkdir -p /root/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /root/.docker/config.json
-    - executor --context $CI_PROJECT_DIR --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+#  - mkdir -p ~/.docker
+#  - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > ~/.docker/config.json
+  - git submodule update --init
+  - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_PROJECT_DIR
+  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
 #build-prod:
 #  stage: build
