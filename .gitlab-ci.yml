@@ -3,22 +3,8 @@ stages:
 - submodules
 - build
 
-submodules:
-  stage: submodules
-  image:
-    name: alpine/git
-    entrypoint: [""]
-  script:
-  - /usr/bin/git submodule update --init
-  cache:
-    key: submodules
-    paths:
-    - taiga-back/
-    - taiga-front-dist/
-  artifacts:
-    paths:
-    - taiga-back/
-    - taiga-front-dist/
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
 
 build:
   stage: build
@@ -26,24 +12,11 @@ build:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: ["/busybox/sh", "-c"]
   script:
-    - mkdir -p /root/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /root/.docker/config.json
+#    - mkdir -p /root/.docker
+#    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /root/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
 #  only:
 #    - tags
-
-#build-dev:
-#  stage: build
-#  artifacts:
-#    paths:
-#    - output.tgz
-#    expire_in: 1h
-#  script:
-##  - mkdir -p ~/.docker
-##  - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > ~/.docker/config.json
-#  - git submodule update --init
-#  - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_PROJECT_DIR
-#  - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
 #build-prod:
 #  stage: build
