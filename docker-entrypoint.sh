@@ -22,6 +22,7 @@ if [ -z "$TAIGA_SKIP_DB_CHECK" ]; then
     python manage.py loaddata initial_role
     python manage.py compilemessages
   fi
+  echo "Database checks completed."
 fi
 
 # Exit after initializing the database
@@ -32,7 +33,9 @@ fi
 
 # Look for static folder, if it does not exist, then generate it
 if [ ! -d "/usr/src/taiga-back/static" ]; then
+  echo "Static content folder not found. Generating it."
   python manage.py collectstatic --noinput
+  echo "Static content folder generated."
 fi
 
 # Automatically replace "TAIGA_HOSTNAME" with the environment variable
@@ -63,6 +66,7 @@ fi
 
 
 # Start nginx service and Taiga Django server, as background shell processes
+echo "Starting taiga+nginx"
 nginx -g "daemon off;" &
 NGINX_PID=$!
 

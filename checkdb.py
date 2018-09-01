@@ -10,7 +10,7 @@ conn_string = (
     "' user='" + DB_USER +
     "' host='" + DB_HOST +
     "' password='" + DB_PASS + "'")
-print("Connecting to database:\n" + conn_string)
+print("Connecting to database: dbname='%s' user='%s' host='%s'; see config for password" % (DB_NAME,DB_USER,DB_HOST))
 conn = psycopg2.connect(conn_string)
 cur = conn.cursor()
 
