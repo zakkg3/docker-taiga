@@ -19,7 +19,6 @@ if [ -z "$TAIGA_SKIP_DB_CHECK" ]; then
     python manage.py migrate --noinput
     python manage.py loaddata initial_user
     python manage.py loaddata initial_project_templates
-    python manage.py loaddata initial_role
     python manage.py compilemessages
   fi
   echo "Database checks completed."
@@ -30,7 +29,6 @@ if [ ! -z "$TAIGA_DB_CHECK_ONLY" ]; then
   echo "Requested database-check only run. Exiting."
   exit 0
 fi
-
 # Look for static folder, if it does not exist, then generate it
 if [ ! -d "/usr/src/taiga-back/static" ]; then
   echo "Static content folder not found. Generating it."
