@@ -9,6 +9,9 @@ set -o errtrace
 NGINX_PID=
 TAIGA_PID=
 
+BACK_CONFIG_FILE=/usr/src/taiga-back/settings/local.py
+FRONT_CONFIG_FILE=/usr/src/taiga-front-dist/dist/conf.json
+
 printerr() {
   echo "${@}" >&2
 }
@@ -41,27 +44,27 @@ generate_static_files() {
 enable_taiga_events() {
   echo "Enabling Taiga Events"
   mv /etc/nginx/taiga-events.conf /etc/nginx/conf.d/default.conf
-  sed -i "s/eventsUrl\": null/eventsUrl\": \"ws:\/\/${TAIGA_HOSTNAME}\/events\"/g" /taiga/conf.json
+  sed -i "s/eventsUrl\": null/eventsUrl\": \"ws:\/\/${TAIGA_HOSTNAME}\/events\"/g" "${FRONT_CONFIG_FILE}"
   sed -i "s/TAIGA_EVENTS_HOSTNAME/${TAIGA_EVENTS_HOSTNAME}/" /etc/nginx/conf.d/default.conf
 }
 
 enable_external_ssl() {
   echo "Enabling external SSL support! SSL handling must be done by a reverse proxy or a similar system"
-  sed -i "s/http:\/\//https:\/\//g" /taiga/conf.json
-  sed -i "s/ws:\/\//wss:\/\//g" /taiga/conf.json
+  sed -i "s/http:\/\//https:\/\//g" "${FRONT_CONFIG_FILE}"
+  sed -i "s/ws:\/\//wss:\/\//g" "${FRONT_CONFIG_FILE}"
 }
 
 enable_ssl() {
   echo "Enabling SSL support!"
-  sed -i "s/http:\/\//https:\/\//g" /taiga/conf.json
-  sed -i "s/ws:\/\//wss:\/\//g" /taiga/conf.json
+  sed -i "s/http:\/\//https:\/\//g" "${FRONT_CONFIG_FILE}"
+  sed -i "s/ws:\/\//wss:\/\//g" "${FRONT_CONFIG_FILE}"
   mv /etc/nginx/ssl.conf /etc/nginx/conf.d/default.conf
 }
 
 disable_ssl() {
   echo "Disabling SSL support!"
-  sed -i "s/https:\/\//http:\/\//g" /taiga/conf.json
-  sed -i "s/wss:\/\//ws:\/\//g" /taiga/conf.json
+  sed -i "s/https:\/\//http:\/\//g" "${FRONT_CONFIG_FILE}"
+  sed -i "s/wss:\/\//ws:\/\//g" "${FRONT_CONFIG_FILE}"
 }
 
 shutdown_trap () {
@@ -76,6 +79,9 @@ main() {
   # before Taiga tries to run /checkdb.py below.
   : "${TAIGA_SLEEP:=0}"
   sleep "${TAIGA_SLEEP}"
+
+  cp /taiga/local.py "${BACK_CONFIG_FILE}"
+  cp /taiga/conf.json "${FRONT_CONFIG_FILE}"
 
   # Setup database automatically if needed
   if [ -z "${TAIGA_SKIP_DB_CHECK:-}" ]; then
@@ -99,7 +105,7 @@ main() {
   fi
 
   # Automatically replace "TAIGA_HOSTNAME" with the environment variable
-  sed -i "s/TAIGA_HOSTNAME/${TAIGA_HOSTNAME:-}/g" /taiga/conf.json
+  sed -i "s/TAIGA_HOSTNAME/${TAIGA_HOSTNAME:-}/g" "${FRONT_CONFIG_FILE}"
 
   # Look to see if we should set the "eventsUrl"
   if [ ! -z "${TAIGA_EVENTS_ENABLE:-}" ]; then
@@ -111,7 +117,7 @@ main() {
     enable_external_ssl
   elif [ "${TAIGA_SSL:-}" = "True" ]; then
     enable_ssl
-  elif grep -q "wss://" "/taiga/conf.json"; then
+  elif grep -q "wss://" "${FRONT_CONFIG_FILE}"; then
     disable_ssl
   fi
 
