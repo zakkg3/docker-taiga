@@ -141,6 +141,34 @@ at [this example](https://github.com/benhutchins/docker-taiga-example/tree/maste
 setup where it specifies a `taiga-conf/local.py`. You can then configure this
 and other [settings available in Taiga](https://github.com/taigaio/taiga-back/blob/master/settings/local.py.example).
 
+## Configuring integrations
+
+Here are supported integrations, with their respective env vars:
+
+- Github: `TAIGA_ENABLE_GITHUB_IMPORTER`
+  - `TAIGA_GITHUB_CLIENT_ID`
+  - `TAIGA_GITHUB_CLIENT_SECRET`
+- Trello: `TAIGA_ENABLE_TRELLO_IMPORTER`
+  - `TAIGA_TRELLO_API_KEY`
+  - `TAIGA_TRELLO_SECRET_KEY`
+- JIRA: `TAIGA_ENABLE_JIRA_IMPORTER`
+  - `TAIGA_JIRA_CONSUMER_KEY`
+  - `TAIGA_JIRA_CERT_FILE` (file path)
+  - `TAIGA_JIRA_PUB_CERT_FILE` (file path)
+- Asana: `TAIGA_ENABLE_ASANA_IMPORTER`
+  - `TAIGA_ASANA_APP_ID`
+  - `TAIGA_ASANA_APP_SECRET`
+
+For now, importers have to be enabled by hand in the frontend config:
+
+```json
+{
+  // ...
+  "importers": ["github", "trello", "jira", "asana"],
+  // ...
+}
+```
+
 ## Volumes
 
 Uploads to Taiga go to the media folder, located by default at `/usr/src/taiga-back/media`.

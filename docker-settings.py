@@ -1,6 +1,11 @@
+# -*- coding: utf-8 -*-
 # Importing common provides default settings, see:
 # https://github.com/taigaio/taiga-back/blob/master/settings/common.py
 from .common import *
+
+def load_file(path):
+    with open(path, 'r') as file:
+        return file.read()
 
 DATABASES = {
     'default': {
@@ -20,14 +25,14 @@ SITES['front']['domain'] = TAIGA_HOSTNAME
 MEDIA_URL  = 'http://' + TAIGA_HOSTNAME + '/media/'
 STATIC_URL = 'http://' + TAIGA_HOSTNAME + '/static/'
 
+SECRET_KEY = os.getenv('TAIGA_SECRET_KEY')
+
 if os.getenv('TAIGA_SSL').lower() == 'true' or os.getenv('TAIGA_SSL_BY_REVERSE_PROXY').lower() == 'true':
     SITES['api']['scheme'] = 'https'
     SITES['front']['scheme'] = 'https'
 
     MEDIA_URL  = 'https://' + TAIGA_HOSTNAME + '/media/'
     STATIC_URL = 'https://' + TAIGA_HOSTNAME + '/static/'
-
-SECRET_KEY = os.getenv('TAIGA_SECRET_KEY')
 
 if os.getenv('RABBIT_PORT') is not None and os.getenv('REDIS_PORT') is not None:
     from .celery import *
@@ -54,3 +59,42 @@ if os.getenv('TAIGA_ENABLE_EMAIL').lower() == 'true':
     EMAIL_PORT = int(os.getenv('TAIGA_EMAIL_PORT'))
     EMAIL_HOST_USER = os.getenv('TAIGA_EMAIL_USER')
     EMAIL_HOST_PASSWORD = os.getenv('TAIGA_EMAIL_PASS')
+
+#########################################
+## IMPORTERS
+#########################################
+
+# Configuration for the GitHub importer
+# Remember to enable it in the front client too.
+if os.getenv('TAIGA_ENABLE_GITHUB_IMPORTER', '').lower() == 'true':
+    IMPORTERS["github"] = {
+        "active": True,
+        "client_id": os.getenv("TAIGA_GITHUB_CLIENT_ID"),
+        "client_secret": os.getenv("TAIGA_GITHUB_CLIENT_SECRET")}
+
+# Configuration for the Trello importer
+# Remember to enable it in the front client too.
+if os.getenv('TAIGA_ENABLE_TRELLO_IMPORTER', '').lower() == 'true':
+    IMPORTERS["trello"] = {
+        "active": True, # Enable or disable the importer
+        "api_key": os.getenv("TAIGA_TRELLO_API_KEY"),
+        "secret_key": os.getenv("TAIGA_TRELLO_SECRET_KEY")}
+
+# Configuration for the Jira importer
+# Remember to enable it in the front client too.
+if os.getenv('TAIGA_ENABLE_JIRA_IMPORTER', '').lower() == 'true':
+    IMPORTERS["jira"] = {
+        "active": True, # Enable or disable the importer
+        "consumer_key": os.getenv("TAIGA_JIRA_CONSUMER_KEY"),
+        "cert": load_file(os.getenv("TAIGA_JIRA_CERT_FILE")),
+        "pub_cert": load_file(os.getenv("TIAGA_JIRA_PUB_CERT"))}
+
+# Configuration for the Asane importer
+# Remember to enable it in the front client too.
+if os.getenv('TAIGA_ENABLE_ASANA_IMPORTER', '').lower() == 'true':
+    IMPORTERS["asana"]["active"] = True
+    IMPORTERS["asana"]["app_id"] = os.getenv("TAIGA_ASANA_APP_ID")
+    IMPORTERS["asana"]["app_secret"] = os.getenv("TAIGA_ASANA_APP_SECRET")
+    IMPORTERS["asana"]["callback_url"] = "{}://{}/project/new/import/asana".format(
+                                                                                  SITES["front"]["scheme"],
+                                                                                  SITES["front"]["domain"])
