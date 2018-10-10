@@ -18,10 +18,9 @@ printerr() {
 
 setup_db() {
   echo "Running database check"
-  python /checkdb.py
-  DB_CHECK_STATUS=$?
+  DB_CHECK_STATUS=$(python /checkdb.py >/dev/null 2>&1; echo ${?})
 
-  if [ ${DB_CHECK_STATUS} -eq 1 ]; then
+  if [ "${DB_CHECK_STATUS}" -eq 1 ]; then
     printerr "Failed to connect to database server or database does not exist."
     exit 1
   fi
@@ -29,7 +28,7 @@ setup_db() {
   echo "Apply database migrations"
   python manage.py migrate --noinput
 
-  if [ ${DB_CHECK_STATUS} -eq 2 ]; then
+  if [ "${DB_CHECK_STATUS}" -eq 2 ]; then
     echo "Configuring initial database"
     python manage.py loaddata initial_user
     python manage.py loaddata initial_project_templates
