@@ -16,6 +16,19 @@ printerr() {
   echo "${@}" >&2
 }
 
+wait_for_db() {
+  : "${TAIGA_SLEEP:=0}"
+  echo "Waiting for DB to come up (timeout ${TAIGA_SLEEP} seconds)..."
+  while [ "${TAIGA_SLEEP}" -ge 0 ]; do
+    TAIGA_SLEEP=$((TAIGA_SLEEP-1))
+    DB_CHECK_STATUS=$(python /checkdb.py >/dev/null 2>&1; echo ${?})
+    grep -q "[02]" <<< "${DB_CHECK_STATUS}" && return 0
+    [ "${TAIGA_SLEEP}" -gt 0 ] && sleep 1
+  done
+  echo "Timed out while waiting for DB. Giving up."
+  return 1
+}
+
 setup_db() {
   echo "Running database check"
   DB_CHECK_STATUS=$(python /checkdb.py >/dev/null 2>&1; echo ${?})
@@ -78,10 +91,10 @@ shutdown_trap () {
 }
 
 main() {
-  # Sleep when asked to, to allow the database time to start
-  # before Taiga tries to run /checkdb.py below.
-  : "${TAIGA_SLEEP:=0}"
-  sleep "${TAIGA_SLEEP}"
+  if ! wait_for_db; then
+    printerr "Waiting for DB failed. Aborting."
+    exit 1
+  fi
 
   cp /taiga/local.py "${BACK_CONFIG_FILE}"
   cp /taiga/conf.json "${FRONT_CONFIG_FILE}"
