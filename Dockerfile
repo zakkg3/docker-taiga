@@ -26,7 +26,7 @@ RUN \
   \
   && echo "### Setup nginx access/error log to stdout/stderr" \
   && ln -sf /dev/stdout /var/log/nginx/access.log \
-  && ln -sf /dev/stderr /var/log/nginx/error.log 
+  && ln -sf /dev/stderr /var/log/nginx/error.log
 
 
 ### Copy required taiga files
@@ -42,11 +42,7 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 ### Setup taiga
 WORKDIR /usr/src/taiga-back
 RUN \
-  echo "### Symlink taiga configuration to config dir" \
-  && ln -s /taiga/local.py /usr/src/taiga-back/settings/local.py \
-  && ln -s /taiga/conf.json /usr/src/taiga-front-dist/dist/conf.json \
-  \
-  && echo "### Symlink taiga configuration to legacy config dir" \
+  echo "### Symlink taiga configuration to legacy config dir" \
   && mkdir -p /usr/src/taiga-front-dist/dist/js/ \
   && ln -s /taiga/conf.json /usr/src/taiga-front-dist/dist/js/conf.json \
   \
