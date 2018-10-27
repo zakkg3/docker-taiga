@@ -1,4 +1,4 @@
-FROM python:3.5-jessie
+FROM python:3.5-stretch
 MAINTAINER Benjamin Hutchins <ben@hutchins.co>
 
 
