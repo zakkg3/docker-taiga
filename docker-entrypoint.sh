@@ -85,9 +85,10 @@ disable_ssl() {
 
 shutdown_trap () {
   echo "Received SIGTERM signal. Shutting down services..."
-  nginx -s stop
-  kill -s SIGTERM $TAIGA_PID
-  echo "Sent stop signal to all services."
+  ps -p $NGINX_PID >/dev/null 2>&1 && nginx -s stop
+  ps -p $TAIGA_PID >/dev/null 2>&1 && kill -s SIGTERM $TAIGA_PID
+  echo "Sent stop signal to all services. Unregistering SIGTERM handler."
+  trap '' SIGTERM
 }
 
 main() {
@@ -138,19 +139,24 @@ main() {
   fi
 
   # Start nginx service and Taiga Django server, as background shell processes
-  echo "Starting taiga+nginx"
+  echo "Starting nginx..."
   nginx -g "daemon off;" &
   NGINX_PID=${!}
 
+  echo "Starting taiga..."
   exec "${@}" &
   TAIGA_PID=${!}
 
   # Register handler for clean termination of the processes
+  echo "Registering SIGTERM handler..."
   trap shutdown_trap SIGTERM
 
   # Wait until both processes have exited
-  wait ${NGINX_PID}
-  wait ${TAIGA_PID}
+  echo "All background services have been started. Waiting on PIDs: ${NGINX_PID} ${TAIGA_PID}"
+  wait -n ${NGINX_PID} ${TAIGA_PID} || true
+  echo "At least one of the background services has terminated. Sending SIGTERM to shell..."
+  kill -SIGTERM $$
+  wait ${NGINX_PID} ${TAIGA_PID} || true
   echo "All background services have exited. Terminating."
 }
 
