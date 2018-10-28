@@ -21,7 +21,7 @@ wait_for_db() {
   echo "Waiting for DB to come up (timeout ${TAIGA_SLEEP} seconds)..."
   while [ "${TAIGA_SLEEP}" -ge 0 ]; do
     TAIGA_SLEEP=$((TAIGA_SLEEP-1))
-    DB_CHECK_STATUS=$(python /checkdb.py >/dev/null 2>&1; echo ${?})
+    DB_CHECK_STATUS=$(python /opt/taiga-bin/checkdb.py >/dev/null 2>&1; echo ${?})
     grep -q "[02]" <<< "${DB_CHECK_STATUS}" && return 0
     [ "${TAIGA_SLEEP}" -gt 0 ] && sleep 1
   done
@@ -31,7 +31,7 @@ wait_for_db() {
 
 setup_db() {
   echo "Running database check"
-  DB_CHECK_STATUS=$(python /checkdb.py >/dev/null 2>&1; echo ${?})
+  DB_CHECK_STATUS=$(python /opt/taiga-bin/checkdb.py >/dev/null 2>&1; echo ${?})
 
   if [ "${DB_CHECK_STATUS}" -eq 1 ]; then
     printerr "Failed to connect to database server or database does not exist."
@@ -92,13 +92,15 @@ shutdown_trap () {
 }
 
 main() {
+  # Wait for DB to come up, before continuing
   if ! wait_for_db; then
     printerr "Waiting for DB failed. Aborting."
     exit 1
   fi
 
-  cp /taiga/local.py "${BACK_CONFIG_FILE}"
-  cp /taiga/conf.json "${FRONT_CONFIG_FILE}"
+  # Install to-be-templated configuration files
+  cp /opt/taiga-conf/taiga/local.py "${BACK_CONFIG_FILE}"
+  cp /opt/taiga-conf/taiga/conf.json "${FRONT_CONFIG_FILE}"
 
   # Setup database automatically if needed
   if [ -z "${TAIGA_SKIP_DB_CHECK:-}" ]; then

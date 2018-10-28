@@ -1,55 +1,6 @@
 FROM python:3.5-stretch
 MAINTAINER Benjamin Hutchins <ben@hutchins.co>
 
-
-### Setup system
-ENV \
-  DEBIAN_FRONTEND="noninteractive" \
-  LANG="en_US.UTF-8" \
-  LC_ALL="en_US.UTF-8"
-RUN \
-  echo "### Setup system packages" \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends \
-      locales \
-      gettext \
-      ca-certificates \
-      nginx \
-  && rm -rf /var/lib/apt/lists/* \
-  \
-  && echo "### Setup system locale" \
-  && echo "LANGUAGE=en"        >  /etc/default/locale \
-  && echo "LANG=en_US.UTF-8"   >> /etc/default/locale \
-  && echo "LC_ALL=en_US.UTF-8" >> /etc/default/locale \
-  && echo "en_US.UTF-8 UTF-8"  >  /etc/locale.gen \
-  && locale-gen \
-  \
-  && echo "### Setup nginx access/error log to stdout/stderr" \
-  && ln -sf /dev/stdout /var/log/nginx/access.log \
-  && ln -sf /dev/stderr /var/log/nginx/error.log
-
-
-### Copy required taiga files
-COPY taiga-back /usr/src/taiga-back
-COPY taiga-front-dist/ /usr/src/taiga-front-dist
-COPY docker-settings.py /usr/src/taiga-back/settings/docker.py
-COPY conf/nginx /etc/nginx
-COPY conf/taiga /taiga
-COPY checkdb.py /checkdb.py
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-
-
-### Setup taiga
-WORKDIR /usr/src/taiga-back
-RUN \
-  echo "### Symlink taiga configuration to legacy config dir" \
-  && mkdir -p /usr/src/taiga-front-dist/dist/js/ \
-  && ln -s /taiga/conf.json /usr/src/taiga-front-dist/dist/js/conf.json \
-  \
-  && echo "### Install required python dependencies" \
-  && pip install --no-cache-dir -r requirements.txt
-
-
 ### Taiga configuration variables
 ENV \
   TAIGA_HOSTNAME="localhost" \
@@ -70,10 +21,19 @@ ENV \
   TAIGA_SKIP_DB_CHECK="" \
   TAIGA_DB_CHECK_ONLY="" \
   TAIGA_SLEEP="0"
-
+ 
+### Setup system
+COPY taiga-back /usr/src/taiga-back
+COPY taiga-front-dist/ /usr/src/taiga-front-dist
+COPY scripts /opt/taiga-bin
+COPY conf /opt/taiga-conf
+WORKDIR /usr/src/taiga-back
+RUN /opt/taiga-bin/docker-install.sh system
+RUN /opt/taiga-bin/docker-install.sh python
+RUN /opt/taiga-bin/docker-install.sh configuration
 
 ### Container configuration
 EXPOSE 80 443
 VOLUME /usr/src/taiga-back/media
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/opt/taiga-bin/docker-entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
