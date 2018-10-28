@@ -1,5 +1,5 @@
 FROM python:3.5-stretch
-MAINTAINER Benjamin Hutchins <ben@hutchins.co>
+MAINTAINER Mario Vitale <mvitale1989@hotmail.com>
 
 ### Taiga configuration variables
 ENV \
@@ -28,9 +28,10 @@ COPY taiga-front-dist/ /usr/src/taiga-front-dist
 COPY scripts /opt/taiga-bin
 COPY conf /opt/taiga-conf
 WORKDIR /usr/src/taiga-back
-RUN /opt/taiga-bin/docker-install.sh system
-RUN /opt/taiga-bin/docker-install.sh python
-RUN /opt/taiga-bin/docker-install.sh configuration
+RUN chmod -R +x /opt/taiga-bin
+RUN ["/opt/taiga-bin/docker-install.sh", "system"]
+RUN ["/opt/taiga-bin/docker-install.sh", "python"]
+RUN ["/opt/taiga-bin/docker-install.sh", "configuration"]
 
 ### Container configuration
 EXPOSE 80 443
