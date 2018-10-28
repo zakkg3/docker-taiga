@@ -51,12 +51,6 @@ setup_db() {
   echo "Database checks completed."
 }
 
-generate_static_files() {
-  echo "Static content folder not found. Generating it."
-  python manage.py collectstatic --noinput
-  echo "Static content folder generated."
-}
-
 enable_taiga_events() {
   echo "Enabling Taiga Events"
   mv /etc/nginx/taiga-events.conf /etc/nginx/conf.d/default.conf
@@ -110,11 +104,6 @@ main() {
   if [ -n "${TAIGA_DB_CHECK_ONLY:-}" ]; then
     echo "Requested database-check only run. Exiting."
     exit 0
-  fi
-
-  # Look for static folder, if it does not exist, then generate it
-  if [ ! -d "/usr/src/taiga-back/static" ]; then
-    generate_static_files
   fi
 
   if [ -z "${TAIGA_HOSTNAME:-}" ]; then

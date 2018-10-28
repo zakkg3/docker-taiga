@@ -29,12 +29,10 @@ COPY scripts /opt/taiga-bin
 COPY conf /opt/taiga-conf
 WORKDIR /usr/src/taiga-back
 RUN chmod -R +x /opt/taiga-bin
-RUN ["/opt/taiga-bin/docker-install.sh", "system"]
-RUN ["/opt/taiga-bin/docker-install.sh", "python"]
-RUN ["/opt/taiga-bin/docker-install.sh", "configuration"]
+RUN ["/opt/taiga-bin/docker-install.sh"]
 
 ### Container configuration
 EXPOSE 80 443
 VOLUME /usr/src/taiga-back/media
 ENTRYPOINT ["/opt/taiga-bin/docker-entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "127.0.0.1:8000"]
