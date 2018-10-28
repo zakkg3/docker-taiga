@@ -19,13 +19,13 @@ printerr() {
 wait_for_db() {
   : "${TAIGA_SLEEP:=0}"
   echo "Waiting for DB to come up (timeout ${TAIGA_SLEEP} seconds)..."
-  while [ "${TAIGA_SLEEP}" -ge 0 ]; do
+  while [ "${TAIGA_SLEEP}" -gt 0 ]; do
     TAIGA_SLEEP=$((TAIGA_SLEEP-1))
     DB_CHECK_STATUS=$(python /opt/taiga-bin/checkdb.py >/dev/null 2>&1; echo ${?})
     grep -q "[02]" <<< "${DB_CHECK_STATUS}" && return 0
-    [ "${TAIGA_SLEEP}" -gt 0 ] && sleep 1
+    sleep 1
   done
-  echo "Timed out while waiting for DB. Giving up."
+  echo "Max sleep time reached while waiting for DB. Giving up."
   return 1
 }
 
@@ -94,8 +94,7 @@ shutdown_trap () {
 main() {
   # Wait for DB to come up, before continuing
   if ! wait_for_db; then
-    printerr "Waiting for DB failed. Aborting."
-    exit 1
+    echo "Database is not yet reachable. Continuing execution anyway."
   fi
 
   # Install to-be-templated configuration files

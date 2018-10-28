@@ -38,6 +38,7 @@ Use the following environmental variables to generate a `local.py` for [taiga-ba
   - `-e TAIGA_HOSTNAME=` (**required** set this to the server host like `taiga.mycompany.com`)
   - `-e TAIGA_SSL=True` (see `Enabling HTTPS` below)
   - `-e TAIGA_SECRET_KEY` (set this to a random string to configure the `SECRET_KEY` value for taiga-back; defaults to an insecure random string)
+  - `-e TAIGA_SLEEP` (set to wait max `$TAIGA_SLEEP` number of seconds for the database to come up, before starting the application; the connection is checked once per second)
   - `-e TAIGA_SKIP_DB_CHECK` (set to skip the database check that attempts to automatically setup initial database)
   - `-e TAIGA_DB_CHECK_ONLY` (set to stop the container right after initializing the DB)
   - `-e TAIGA_COMPONENT` (set to either `front` or `back` to execute just one of the two components; leave unset for launching both in the same container)
