@@ -140,15 +140,20 @@ main() {
     disable_ssl
   fi
 
-  # Start nginx service and Taiga Django server, as background shell processes
-  echo "Starting nginx..."
-  nginx -g "daemon off;" &
-  NGINX_PID=${!}
+  # Start the requested services, as background shell processes
+  : "${TAIGA_COMPONENT:=}"
+  if [ -z "${TAIGA_COMPONENT}" -o "${TAIGA_COMPONENT}" = "front" ]; then
+    echo "Starting nginx..."
+    nginx -g "daemon off;" &
+    NGINX_PID=${!}
+  fi
 
-  echo "Starting taiga..."
-  exec "${@}" &
-  TAIGA_PID=${!}
-
+  if [ -z "${TAIGA_COMPONENT}" -o "${TAIGA_COMPONENT}" = "back" ]; then
+    echo "Starting taiga backend..."
+    exec "${@}" &
+    TAIGA_PID=${!}
+  fi
+    
   # Register handler for clean termination of the processes
   echo "Registering SIGTERM handler..."
   trap shutdown_trap SIGTERM

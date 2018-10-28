@@ -40,6 +40,7 @@ Use the following environmental variables to generate a `local.py` for [taiga-ba
   - `-e TAIGA_SECRET_KEY` (set this to a random string to configure the `SECRET_KEY` value for taiga-back; defaults to an insecure random string)
   - `-e TAIGA_SKIP_DB_CHECK` (set to skip the database check that attempts to automatically setup initial database)
   - `-e TAIGA_DB_CHECK_ONLY` (set to stop the container right after initializing the DB)
+  - `-e TAIGA_COMPONENT` (set to either `front` or `back` to execute just one of the two components; leave unset for launching both in the same container)
   - `-e TAIGA_ENABLE_EMAIL=True` (see `Configuring SMTP` below)
 
 *Note*: Database variables are also required, see `Using Database server` below. These are required even when using a container for your database.
