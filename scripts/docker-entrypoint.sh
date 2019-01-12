@@ -9,8 +9,10 @@ set -o errtrace
 NGINX_PID=
 TAIGA_PID=
 
-BACK_CONFIG_FILE=/usr/src/taiga-back/settings/local.py
+BACK_LOCAL_CONFIG_FILE=/usr/src/taiga-back/settings/local.py
+BACK_DOCKER_CONFIG_FILE=/usr/src/taiga-back/settings/docker.py
 FRONT_CONFIG_FILE=/usr/src/taiga-front-dist/dist/conf.json
+NGINX_CONFIG_FILE=/etc/nginx/conf.d/default.conf
 
 printerr() {
   echo "${@}" >&2
@@ -51,30 +53,54 @@ setup_db() {
   echo "Database checks completed."
 }
 
-enable_taiga_events() {
-  echo "Enabling Taiga Events"
-  mv /etc/nginx/taiga-events.conf /etc/nginx/conf.d/default.conf
-  sed -i "s/eventsUrl\": null/eventsUrl\": \"ws:\/\/${TAIGA_HOSTNAME}\/events\"/g" "${FRONT_CONFIG_FILE}"
-  sed -i "s/TAIGA_EVENTS_HOSTNAME/${TAIGA_EVENTS_HOSTNAME}/" /etc/nginx/conf.d/default.conf
-}
+setup_config_files() {
+  echo "Templating out taiga and nginx configuration files"
+  if [ -z "${TAIGA_HOSTNAME:-}" ]; then
+    printerr "You have to provide TAIGA_HOSTNAME env var."
+    exit 1
+  fi
+  export NGINX_SOURCE_CONFIG=/etc/nginx/taiga-available/default.conf
+  export NGINX_TAIGA_EVENTS_SHARD=""
+  export URL_HTTP_SCHEME=http
+  export URL_WS_SCHEME=ws
+  export URL_TAIGA_EVENTS=null
 
-enable_external_ssl() {
-  echo "Enabling external SSL support! SSL handling must be done by a reverse proxy or a similar system"
-  sed -i "s/http:\/\//https:\/\//g" "${FRONT_CONFIG_FILE}"
-  sed -i "s/ws:\/\//wss:\/\//g" "${FRONT_CONFIG_FILE}"
-}
+  # Setup SSL configuration variables
+  if grep -q -i true <<<${TAIGA_SSL_BY_REVERSE_PROXY}; then
+    echo "Enabling external SSL support! SSL handling must be done by a reverse proxy or a similar system"
+    URL_HTTP_SCHEME=https
+    URL_WS_SCHEME=wss
+  elif grep -q -i true <<<${TAIGA_SSL}; then
+    echo "Enabling SSL support! Certificate and key will be read from files '/etc/nginx/ssl/ssl.crt' and /etc/nginx/ssl/ssl.key"
+    URL_HTTP_SCHEME=https
+    URL_WS_SCHEME=wss
+    NGINX_SOURCE_CONFIG=/etc/nginx/taiga-available/ssl.conf
+  fi
 
-enable_ssl() {
-  echo "Enabling SSL support!"
-  sed -i "s/http:\/\//https:\/\//g" "${FRONT_CONFIG_FILE}"
-  sed -i "s/ws:\/\//wss:\/\//g" "${FRONT_CONFIG_FILE}"
-  mv /etc/nginx/ssl.conf /etc/nginx/conf.d/default.conf
-}
+  # Setup taiga events configuration variables
+  if grep -q -i true <<<${TAIGA_EVENTS_ENABLE:-}; then
+    NGINX_TAIGA_EVENTS_SHARD="    # Events
+    location /events {
+       proxy_pass http://${TAIGA_EVENTS_HOSTNAME}/events;
+       proxy_http_version 1.1;
+       proxy_set_header Upgrade \$http_upgrade;
+       proxy_set_header Connection "upgrade";
+       proxy_connect_timeout 7d;
+       proxy_send_timeout 7d;
+       proxy_read_timeout 7d;
+    }"
+    URL_TAIGA_EVENTS="\"${URL_WS_SCHEME}://${TAIGA_EVENTS_HOSTNAME}/events\""
+  fi
 
-disable_ssl() {
-  echo "Disabling SSL support!"
-  sed -i "s/https:\/\//http:\/\//g" "${FRONT_CONFIG_FILE}"
-  sed -i "s/wss:\/\//ws:\/\//g" "${FRONT_CONFIG_FILE}"
+  # Template out configuration files
+  local NGINX_ENVSUBST_VARIABLES='${NGINX_TAIGA_EVENTS_SHARD}'
+  local BACK_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME}'
+  local FRONT_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME} ${TAIGA_HOSTNAME} ${URL_TAIGA_EVENTS}'
+  mkdir -p /etc/nginx/conf.d
+  envsubst "${NGINX_ENVSUBST_VARIABLES}" <${NGINX_SOURCE_CONFIG}                   >${NGINX_CONFIG_FILE}
+  envsubst "${BACK_ENVSUBST_VARIABLES}"  </opt/taiga-conf/taiga/local.py           >${BACK_LOCAL_CONFIG_FILE}
+  envsubst "${BACK_ENVSUBST_VARIABLES} " </opt/taiga-conf/taiga/docker-settings.py >${BACK_DOCKER_CONFIG_FILE}
+  envsubst "${FRONT_ENVSUBST_VARIABLES}" </opt/taiga-conf/taiga/conf.json          >${FRONT_CONFIG_FILE}
 }
 
 shutdown_trap () {
@@ -86,46 +112,21 @@ shutdown_trap () {
 }
 
 main() {
+  # Template out the required configuration files, based on env vars
+  setup_config_files
+
   # Wait for DB to come up, before continuing
   if ! wait_for_db; then
     echo "Database is not yet reachable. Continuing execution anyway."
   fi
 
-  # Install to-be-templated configuration files
-  cp /opt/taiga-conf/taiga/local.py "${BACK_CONFIG_FILE}"
-  cp /opt/taiga-conf/taiga/conf.json "${FRONT_CONFIG_FILE}"
-
   # Setup database automatically if needed
   if [ -z "${TAIGA_SKIP_DB_CHECK:-}" ]; then
     setup_db
-  fi
-
-  # Exit after initializing the database
-  if [ -n "${TAIGA_DB_CHECK_ONLY:-}" ]; then
-    echo "Requested database-check only run. Exiting."
-    exit 0
-  fi
-
-  if [ -z "${TAIGA_HOSTNAME:-}" ]; then
-    printerr "You have to provide TAIGA_HOSTNAME env var."
-    exit 1
-  fi
-
-  # Automatically replace "TAIGA_HOSTNAME" with the environment variable
-  sed -i "s/TAIGA_HOSTNAME/${TAIGA_HOSTNAME:-}/g" "${FRONT_CONFIG_FILE}"
-
-  # Look to see if we should set the "eventsUrl"
-  if [ ! -z "${TAIGA_EVENTS_ENABLE:-}" ]; then
-    enable_taiga_events
-  fi
-
-  # Handle enabling/disabling SSL
-  if [ "${TAIGA_SSL_BY_REVERSE_PROXY:-}" = "True" ]; then
-    enable_external_ssl
-  elif [ "${TAIGA_SSL:-}" = "True" ]; then
-    enable_ssl
-  elif grep -q "wss://" "${FRONT_CONFIG_FILE}"; then
-    disable_ssl
+    if [ -n "${TAIGA_DB_CHECK_ONLY:-}" ]; then
+      echo "Requested database-check only run. Exiting."
+      exit 0
+    fi
   fi
 
   # Start the requested services, as background shell processes

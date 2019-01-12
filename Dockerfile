@@ -20,7 +20,11 @@ ENV \
   TAIGA_EMAIL_PASS="" \
   TAIGA_SKIP_DB_CHECK="" \
   TAIGA_DB_CHECK_ONLY="" \
-  TAIGA_SLEEP="0"
+  TAIGA_SLEEP="0" \
+  TAIGA_EVENTS_ENABLE="False" \
+  TAIGA_EVENTS_HOSTNAME="events" \
+  RABBIT_HOST="rabbit:5672" \
+  REDIS_HOST="redis:6379"
  
 ### Setup system
 COPY taiga-back /usr/src/taiga-back
