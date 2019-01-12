@@ -34,8 +34,11 @@ install_static_files() {
 }
 
 install_plugins() {
-  pip install taiga-contrib-saml-auth
-  #TODO: render out local settings, ready for optional use by the docker-entrypoint
+  # SAML auth
+  pip install taiga-contrib-saml-auth==1.1.0
+  mkdir -p /usr/src/taiga-front-dist/dist/plugins/saml-auth
+  curl -L -o /tmp/taiga-contrib-saml-auth.tgz https://github.com/jgiannuzzi/taiga-contrib-saml-auth/archive/1.1.0.tar.gz
+  tar -x -f /tmp/taiga-contrib-saml-auth.tgz --strip-components=3 -C /usr/src/taiga-front-dist/dist/plugins/saml-auth taiga-contrib-saml-auth-1.1.0/front/dist
 }
 
 prepare_system

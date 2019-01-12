@@ -10,5 +10,5 @@
     "privacyPolicyUrl": null,
     "termsOfServiceUrl": null,
     "maxUploadFileSize": null,
-    "contribPlugins": []
+    "contribPlugins": [ ${CONTRIB_PLUGINS_LIST} ]
 }

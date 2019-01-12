@@ -9,10 +9,10 @@ set -o errtrace
 NGINX_PID=
 TAIGA_PID=
 
-BACK_LOCAL_CONFIG_FILE=/usr/src/taiga-back/settings/local.py
-BACK_DOCKER_CONFIG_FILE=/usr/src/taiga-back/settings/docker.py
-FRONT_CONFIG_FILE=/usr/src/taiga-front-dist/dist/conf.json
-NGINX_CONFIG_FILE=/etc/nginx/conf.d/default.conf
+BACK_LOCAL_CONFIG=/usr/src/taiga-back/settings/local.py
+BACK_DOCKER_CONFIG=/usr/src/taiga-back/settings/docker.py
+FRONT_CONFIG=/usr/src/taiga-front-dist/dist/conf.json
+NGINX_CONFIG=/etc/nginx/conf.d/default.conf
 
 printerr() {
   echo "${@}" >&2
@@ -59,8 +59,11 @@ setup_config_files() {
     printerr "You have to provide TAIGA_HOSTNAME env var."
     exit 1
   fi
-  export NGINX_SOURCE_CONFIG=/etc/nginx/taiga-available/default.conf
-  export NGINX_TAIGA_EVENTS_SHARD=""
+  export NGINX_CONFIG_SOURCE=/etc/nginx/taiga-available/default.conf
+  export NGINX_SHARDS_DIR_SOURCE=/etc/nginx/taiga-available/shards
+  export NGINX_SHARDS_DIR=/etc/nginx/taiga-shards
+  export NGINX_SHARDS_LIST=""
+  export CONTRIB_PLUGINS_LIST=""
   export URL_HTTP_SCHEME=http
   export URL_WS_SCHEME=ws
   export URL_TAIGA_EVENTS=null
@@ -74,33 +77,40 @@ setup_config_files() {
     echo "Enabling SSL support! Certificate and key will be read from files '/etc/nginx/ssl/ssl.crt' and /etc/nginx/ssl/ssl.key"
     URL_HTTP_SCHEME=https
     URL_WS_SCHEME=wss
-    NGINX_SOURCE_CONFIG=/etc/nginx/taiga-available/ssl.conf
+    NGINX_CONFIG_SOURCE=/etc/nginx/taiga-available/ssl.conf
   fi
 
   # Setup taiga events configuration variables
   if grep -q -i true <<<${TAIGA_EVENTS_ENABLE:-}; then
-    NGINX_TAIGA_EVENTS_SHARD="    # Events
-    location /events {
-       proxy_pass http://${TAIGA_EVENTS_HOSTNAME}/events;
-       proxy_http_version 1.1;
-       proxy_set_header Upgrade \$http_upgrade;
-       proxy_set_header Connection "upgrade";
-       proxy_connect_timeout 7d;
-       proxy_send_timeout 7d;
-       proxy_read_timeout 7d;
-    }"
+    NGINX_SHARDS_LIST="${NGINX_SHARDS_LIST:-} taiga_events.conf"
     URL_TAIGA_EVENTS="\"${URL_WS_SCHEME}://${TAIGA_EVENTS_HOSTNAME}/events\""
   fi
 
+  # Setup SAML auth
+  if grep -q -i true <<<${SAML_AUTH_ENABLE:-}; then
+    NGINX_SHARDS_LIST="${NGINX_SHARDS_LIST:-} saml_auth.conf"
+    CONTRIB_PLUGINS_LIST="${CONTRIB_PLUGINS_LIST:-} \"/plugins/saml-auth/saml-auth.json\""
+    cat >>/usr/src/taiga-back/taiga/urls.py <<EOF
+### SAML Auth
+urlpatterns += [url(r'^saml/', include('taiga_contrib_saml_auth.urls'))]
+EOF
+  fi
+
+  # Prepare plugins variable
+  local CONTRIB_PLUGINS=$(python -c 'import sys; print(", ".join( list(filter(None,sys.argv[1:])) ))' ${CONTRIB_PLUGINS_LIST:-})
+
   # Template out configuration files
-  local NGINX_ENVSUBST_VARIABLES='${NGINX_TAIGA_EVENTS_SHARD}'
+  local NGINX_ENVSUBST_VARIABLES='${NGINX_SHARDS_DIR} ${TAIGA_EVENTS_HOSTNAME}'
   local BACK_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME}'
-  local FRONT_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME} ${TAIGA_HOSTNAME} ${URL_TAIGA_EVENTS}'
-  mkdir -p /etc/nginx/conf.d
-  envsubst "${NGINX_ENVSUBST_VARIABLES}" <${NGINX_SOURCE_CONFIG}                   >${NGINX_CONFIG_FILE}
-  envsubst "${BACK_ENVSUBST_VARIABLES}"  </opt/taiga-conf/taiga/local.py           >${BACK_LOCAL_CONFIG_FILE}
-  envsubst "${BACK_ENVSUBST_VARIABLES} " </opt/taiga-conf/taiga/docker-settings.py >${BACK_DOCKER_CONFIG_FILE}
-  envsubst "${FRONT_ENVSUBST_VARIABLES}" </opt/taiga-conf/taiga/conf.json          >${FRONT_CONFIG_FILE}
+  local FRONT_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME} ${TAIGA_HOSTNAME} ${URL_TAIGA_EVENTS} ${CONTRIB_PLUGINS_LIST}'
+  mkdir -p /etc/nginx/conf.d "${NGINX_SHARDS_DIR}"
+  envsubst "${NGINX_ENVSUBST_VARIABLES}" <${NGINX_CONFIG_SOURCE}                   >${NGINX_CONFIG}
+  envsubst "${BACK_ENVSUBST_VARIABLES}"  </opt/taiga-conf/taiga/local.py           >${BACK_LOCAL_CONFIG}
+  envsubst "${BACK_ENVSUBST_VARIABLES}"  </opt/taiga-conf/taiga/docker-settings.py >${BACK_DOCKER_CONFIG}
+  envsubst "${FRONT_ENVSUBST_VARIABLES}" </opt/taiga-conf/taiga/conf.json          >${FRONT_CONFIG}
+  for shard in ${NGINX_SHARDS_LIST}; do
+    envsubst "${NGINX_ENVSUBST_VARIABLES}" <${NGINX_SHARDS_DIR_SOURCE}/${shard} >${NGINX_SHARDS_DIR}/${shard}
+  done
 }
 
 shutdown_trap () {

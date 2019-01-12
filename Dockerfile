@@ -24,7 +24,9 @@ ENV \
   TAIGA_EVENTS_ENABLE="False" \
   TAIGA_EVENTS_HOSTNAME="events" \
   RABBIT_HOST="rabbit:5672" \
-  REDIS_HOST="redis:6379"
+  REDIS_HOST="redis:6379" \
+  SAML_AUTH_ENABLE="False" \
+  SAML_AUTH_JSON_CONFIG=""
  
 ### Setup system
 COPY taiga-back /usr/src/taiga-back

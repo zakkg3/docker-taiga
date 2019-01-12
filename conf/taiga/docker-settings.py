@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Importing common provides default settings, see:
 # https://github.com/taigaio/taiga-back/blob/master/settings/common.py
+import os
+import json
 from .common import *
 
 def load_file(path):
@@ -97,3 +99,11 @@ if os.getenv('TAIGA_ENABLE_ASANA_IMPORTER', '').lower() == 'true':
     IMPORTERS["asana"]["callback_url"] = "{}://{}/project/new/import/asana".format(
                                                                                   SITES["front"]["scheme"],
                                                                                   SITES["front"]["domain"])
+
+#########################################
+## SAML AUTH
+#########################################
+
+if os.getenv("SAML_AUTH_ENABLE").lower() == "true":
+  INSTALLED_APPS += ["taiga_contrib_saml_auth"]
+  SAML_AUTH = json.loads(os.getenv("SAML_AUTH_JSON_CONFIG") or 'null')
