@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Importing common provides default settings, see:
 # https://github.com/taigaio/taiga-back/blob/master/settings/common.py
+import os
+import json
 from .common import *
 
 def load_file(path):
@@ -18,31 +20,30 @@ DATABASES = {
 }
 
 TAIGA_HOSTNAME = os.getenv('TAIGA_HOSTNAME')
+URL_HTTP_SCHEME = '${URL_HTTP_SCHEME}'
 
+SITES['api']['scheme'] = URL_HTTP_SCHEME
 SITES['api']['domain'] = TAIGA_HOSTNAME
+SITES['front']['scheme'] = URL_HTTP_SCHEME
 SITES['front']['domain'] = TAIGA_HOSTNAME
 
-MEDIA_URL  = 'http://' + TAIGA_HOSTNAME + '/media/'
-STATIC_URL = 'http://' + TAIGA_HOSTNAME + '/static/'
+MEDIA_URL  = URL_HTTP_SCHEME + '://' + TAIGA_HOSTNAME + '/media/'
+STATIC_URL = URL_HTTP_SCHEME + '://' + TAIGA_HOSTNAME + '/static/'
 
 SECRET_KEY = os.getenv('TAIGA_SECRET_KEY')
 
-if os.getenv('TAIGA_SSL').lower() == 'true' or os.getenv('TAIGA_SSL_BY_REVERSE_PROXY').lower() == 'true':
-    SITES['api']['scheme'] = 'https'
-    SITES['front']['scheme'] = 'https'
+RABBIT_HOST = os.getenv('RABBIT_HOST') or ""
+REDIS_HOST  = os.getenv('REDIS_HOST') or ""
 
-    MEDIA_URL  = 'https://' + TAIGA_HOSTNAME + '/media/'
-    STATIC_URL = 'https://' + TAIGA_HOSTNAME + '/static/'
-
-if os.getenv('RABBIT_PORT') is not None and os.getenv('REDIS_PORT') is not None:
+if os.getenv('TAIGA_EVENTS_ENABLE').lower() == "true":
     from .celery import *
 
-    BROKER_URL = 'amqp://guest:guest@rabbit:5672'
-    CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+    BROKER_URL = 'amqp://guest:guest@{}'.format(RABBIT_HOST)
+    CELERY_RESULT_BACKEND = 'redis://{}/0'.format(REDIS_HOST)
     CELERY_ENABLED = True
 
     EVENTS_PUSH_BACKEND = "taiga.events.backends.rabbitmq.EventsPushBackend"
-    EVENTS_PUSH_BACKEND_OPTIONS = {"url": "amqp://guest:guest@rabbit:5672//"}
+    EVENTS_PUSH_BACKEND_OPTIONS = {"url": "amqp://guest:guest@{}/".format(REDIS_HOST)}
 
 if os.getenv('TAIGA_ENABLE_EMAIL').lower() == 'true':
     DEFAULT_FROM_EMAIL = os.getenv('TAIGA_EMAIL_FROM')
@@ -98,3 +99,11 @@ if os.getenv('TAIGA_ENABLE_ASANA_IMPORTER', '').lower() == 'true':
     IMPORTERS["asana"]["callback_url"] = "{}://{}/project/new/import/asana".format(
                                                                                   SITES["front"]["scheme"],
                                                                                   SITES["front"]["domain"])
+
+#########################################
+## SAML AUTH
+#########################################
+
+if os.getenv("SAML_AUTH_ENABLE").lower() == "true":
+  INSTALLED_APPS += ["taiga_contrib_saml_auth"]
+  SAML_AUTH = json.loads(os.getenv("SAML_AUTH_JSON_CONFIG") or 'null')

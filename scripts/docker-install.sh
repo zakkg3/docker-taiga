@@ -5,7 +5,7 @@ prepare_system() {
   ### Install system dependencies
   apt-get update
   DEBIAN_FRONTEND="noninteractive" \
-    apt-get install -y --no-install-recommends locales gettext ca-certificates nginx
+    apt-get install -y --no-install-recommends locales gettext ca-certificates nginx libxmlsec1-dev pkg-config
   rm -rf /var/lib/apt/lists/*
   ### Setup system locale
   echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
@@ -22,8 +22,7 @@ install_configuration_files() {
   ### Setup legacy configuration symlinks
   mkdir -p /usr/src/taiga-front-dist/dist/js/
   ln -s ../conf.json /usr/src/taiga-front-dist/dist/js/conf.json
-  ### Install settings files
-  cp /opt/taiga-conf/taiga/docker-settings.py /usr/src/taiga-back/settings/docker.py
+  ### Install nginx files
   cp -r /opt/taiga-conf/nginx /etc/
   ### Install nginx stdout/stderr symlinks
   ln -sf /dev/stdout /var/log/nginx/access.log
@@ -34,7 +33,16 @@ install_static_files() {
   python manage.py collectstatic --noinput
 }
 
+install_plugins() {
+  # SAML auth
+  pip install taiga-contrib-saml-auth==1.1.0
+  mkdir -p /usr/src/taiga-front-dist/dist/plugins/saml-auth
+  curl -L -o /tmp/taiga-contrib-saml-auth.tgz https://github.com/jgiannuzzi/taiga-contrib-saml-auth/archive/1.1.0.tar.gz
+  tar -x -f /tmp/taiga-contrib-saml-auth.tgz --strip-components=3 -C /usr/src/taiga-front-dist/dist/plugins/saml-auth taiga-contrib-saml-auth-1.1.0/front/dist
+}
+
 prepare_system
 install_python_dependencies
 install_configuration_files
 install_static_files
+install_plugins

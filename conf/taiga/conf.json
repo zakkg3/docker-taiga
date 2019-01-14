@@ -1,6 +1,6 @@
 {
-    "api": "http://TAIGA_HOSTNAME/api/v1/",
-    "eventsUrl": null,
+    "api": "${URL_HTTP_SCHEME}://${TAIGA_HOSTNAME}/api/v1/",
+    "eventsUrl": ${URL_TAIGA_EVENTS},
     "debug": true,
     "debugInfo": false,
     "defaultLanguage": "en",
@@ -10,5 +10,5 @@
     "privacyPolicyUrl": null,
     "termsOfServiceUrl": null,
     "maxUploadFileSize": null,
-    "contribPlugins": []
+    "contribPlugins": [ ${CONTRIB_PLUGINS_LIST} ]
 }
