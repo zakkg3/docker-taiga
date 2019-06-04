@@ -88,7 +88,7 @@ if os.getenv('TAIGA_ENABLE_JIRA_IMPORTER', '').lower() == 'true':
         "active": True, # Enable or disable the importer
         "consumer_key": os.getenv("TAIGA_JIRA_CONSUMER_KEY"),
         "cert": load_file(os.getenv("TAIGA_JIRA_CERT_FILE")),
-        "pub_cert": load_file(os.getenv("TIAGA_JIRA_PUB_CERT"))}
+        "pub_cert": load_file(os.getenv("TAIGA_JIRA_PUB_CERT"))}
 
 # Configuration for the Asane importer
 # Remember to enable it in the front client too.
