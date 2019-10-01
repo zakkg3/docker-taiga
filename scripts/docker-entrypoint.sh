@@ -95,6 +95,10 @@ setup_config_files() {
 urlpatterns += [url(r'^saml/', include('taiga_contrib_saml_auth.urls'))]
 EOF
   fi
+  # Setup LDAP environment
+  if grep -q -i true <<<${LDAP_AUTH_ENABLE:-}; then
+    export LOGIN_FORM_TYPE="ldap"   
+  fi
 
   # Prepare plugins variable
   local CONTRIB_PLUGINS=$(python -c 'import sys; print(", ".join( list(filter(None,sys.argv[1:])) ))' ${CONTRIB_PLUGINS_LIST:-})
@@ -102,7 +106,7 @@ EOF
   # Template out configuration files
   local NGINX_ENVSUBST_VARIABLES='${NGINX_SHARDS_DIR} ${TAIGA_EVENTS_HOSTNAME}'
   local BACK_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME}'
-  local FRONT_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME} ${TAIGA_HOSTNAME} ${URL_TAIGA_EVENTS} ${CONTRIB_PLUGINS_LIST}'
+  local FRONT_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME} ${TAIGA_HOSTNAME} ${URL_TAIGA_EVENTS} ${CONTRIB_PLUGINS_LIST} ${LOGIN_FORM_TYPE}'
   mkdir -p /etc/nginx/conf.d "${NGINX_SHARDS_DIR}"
   envsubst "${NGINX_ENVSUBST_VARIABLES}" <${NGINX_CONFIG_SOURCE}                   >${NGINX_CONFIG}
   envsubst "${BACK_ENVSUBST_VARIABLES}"  </opt/taiga-conf/taiga/local.py           >${BACK_LOCAL_CONFIG}

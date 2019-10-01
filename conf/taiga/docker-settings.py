@@ -107,3 +107,34 @@ if os.getenv('TAIGA_ENABLE_ASANA_IMPORTER', '').lower() == 'true':
 if os.getenv("SAML_AUTH_ENABLE").lower() == "true":
   INSTALLED_APPS += ["taiga_contrib_saml_auth"]
   SAML_AUTH = json.loads(os.getenv("SAML_AUTH_JSON_CONFIG") or 'null')
+
+#########################################
+## LDAP AUTH
+#########################################
+
+
+if os.getenv("LDAP_AUTH_ENABLE").lower() == "true":
+  INSTALLED_APPS += ["taiga_contrib_ldap_auth_ext"]
+  # TODO https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/issues/16
+  LDAP_SERVER = os.getenv("LDAP_SERVER")
+  LDAP_PORT = int(os.getenv("LDAP_PORT"))
+
+  # Flag to enable LDAP with STARTTLS before bind
+  LDAP_START_TLS = os.getenv("LDAP_START_TLS")
+
+  # Full DN of the service account use to connect to LDAP server and search for login user's account entry
+  # If LDAP_BIND_DN is not specified, or is blank, then an anonymous bind is attempated
+  LDAP_BIND_DN = os.getenv("LDAP_BIND_DN")
+  LDAP_BIND_PASSWORD = os.getenv("LDAP_BIND_PASSWORD")
+
+  # Starting point within LDAP structure to search for login user
+  LDAP_SEARCH_BASE = os.getenv("LDAP_SEARCH_BASE")
+
+  # Additional search criteria to the filter (will be ANDed)
+  LDAP_SEARCH_FILTER_ADDITIONAL = os.getenv("LDAP_SEARCH_FILTER_ADDITIONAL")
+
+  # Names of attributes to get username, e-mail and full name values from
+  # These fields need to have a value in LDAP 
+  LDAP_USERNAME_ATTRIBUTE = os.getenv("LDAP_USERNAME_ATTRIBUTE")
+  LDAP_EMAIL_ATTRIBUTE = os.getenv("LDAP_EMAIL_ATTRIBUTE")
+  LDAP_FULL_NAME_ATTRIBUTE = os.getenv("LDAP_FULL_NAME_ATTRIBUTE")

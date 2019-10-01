@@ -26,7 +26,20 @@ ENV \
   RABBIT_HOST="rabbit:5672" \
   REDIS_HOST="redis:6379" \
   SAML_AUTH_ENABLE="False" \
-  SAML_AUTH_JSON_CONFIG=""
+  SAML_AUTH_JSON_CONFIG=""\
+  LOGIN_FORM_TYPE="normal" \
+  LDAP_AUTH_ENABLE="False" \
+  LDAP_SERVER='ldap://ldap.example.com' \
+  LDAP_PORT="389" \
+  LDAP_START_TLS="False" \
+  LDAP_BIND_DN='CN=SVC Account,OU=Service Accounts,OU=Servers,DC=example,DC=com' \
+  LDAP_BIND_PASSWORD='<REPLACE_ME>' \
+  LDAP_SEARCH_BASE='OU=DevTeam,DC=example,DC=net' \
+  LDAP_SEARCH_FILTER_ADDITIONAL='(mail=*)' \
+  LDAP_USERNAME_ATTRIBUTE='uid' \
+  LDAP_EMAIL_ATTRIBUTE='mail' \
+  LDAP_FULL_NAME_ATTRIBUTE='displayName'
+
  
 ### Setup system
 COPY taiga-back /usr/src/taiga-back
