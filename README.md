@@ -143,6 +143,18 @@ at [this example](https://github.com/benhutchins/docker-taiga-example/tree/maste
 setup where it specifies a `taiga-conf/local.py`. You can then configure this
 and other [settings available in Taiga](https://github.com/taigaio/taiga-back/blob/master/settings/local.py.example).
 
+## Configuring LDAP
+If you want to use LDAP authenticate, you'll need to specify all of
+these additional arguments to your `docker run` command.
+
+- `-e LDAP_AUTH_ENABLE=True`
+- `-e LDAP_BIND_DN=<bind account dn>`
+- `-e LDAP_SEARCH_BASE=<base>` 
+- `-e LDAP_SERVER=ldap://<ldap_server_host_name>`
+
+Other LDAP option can take a look at plugin docs <https://github.com/ensky/taiga-contrib-ldap-auth>
+
+
 ## Configuring integrations
 
 Here are supported integrations, with their respective env vars:
