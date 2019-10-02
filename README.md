@@ -172,6 +172,7 @@ Here are supported integrations, with their respective env vars:
 - Asana: `TAIGA_ENABLE_ASANA_IMPORTER`
   - `TAIGA_ASANA_APP_ID`
   - `TAIGA_ASANA_APP_SECRET`
+- Slack: `SLACK_INTEGRATION_ENABLE=true`
 
 For now, importers have to be enabled by hand in the frontend config:
 

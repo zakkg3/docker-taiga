@@ -99,6 +99,10 @@ EOF
   if grep -q -i true <<<${LDAP_AUTH_ENABLE:-}; then
     export LOGIN_FORM_TYPE="ldap"   
   fi
+  # Setup SLACK Integration
+  if grep -q -i true <<<${SLACK_INTEGRATION_ENABLE:-}; then
+    CONTRIB_PLUGINS_LIST="${CONTRIB_PLUGINS_LIST:-} \"/plugins/slack/slack.json\""
+  fi
 
   # Prepare plugins variable
   local CONTRIB_PLUGINS=$(python -c 'import sys; print(", ".join( list(filter(None,sys.argv[1:])) ))' ${CONTRIB_PLUGINS_LIST:-})

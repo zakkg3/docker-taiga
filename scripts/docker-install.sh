@@ -40,6 +40,12 @@ install_plugins() {
   curl -L -o /tmp/taiga-contrib-saml-auth.tgz https://github.com/jgiannuzzi/taiga-contrib-saml-auth/archive/1.1.0.tar.gz
   tar -x -f /tmp/taiga-contrib-saml-auth.tgz --strip-components=3 -C /usr/src/taiga-front-dist/dist/plugins/saml-auth taiga-contrib-saml-auth-1.1.0/front/dist
   pip install taiga-contrib-ldap-auth-ext==0.4.4
+  
+  pip install taiga-contrib-slack==3.1
+  curl -L -o /tmp/taiga-contrib-slack.tgz https://github.com/taigaio/taiga-contrib-slack/archive/3.1.tar.gz
+  mkdir -p /usr/src/taiga-front-dist/dist/plugins/slack
+  tar -x -f /tmp/taiga-contrib-slack.tgz --strip-components=3 -C  /usr/src/taiga-front-dist/dist/plugins/slack taiga-contrib-slack-3.1/front/dist
+
 }
 
 prepare_system

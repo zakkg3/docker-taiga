@@ -138,3 +138,9 @@ if os.getenv("LDAP_AUTH_ENABLE").lower() == "true":
   LDAP_USERNAME_ATTRIBUTE = os.getenv("LDAP_USERNAME_ATTRIBUTE")
   LDAP_EMAIL_ATTRIBUTE = os.getenv("LDAP_EMAIL_ATTRIBUTE")
   LDAP_FULL_NAME_ATTRIBUTE = os.getenv("LDAP_FULL_NAME_ATTRIBUTE")
+
+#########################################
+## SLACK Integration
+#########################################
+
+INSTALLED_APPS += ["taiga_contrib_slack"]
