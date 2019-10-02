@@ -39,7 +39,7 @@ install_plugins() {
   mkdir -p /usr/src/taiga-front-dist/dist/plugins/saml-auth
   curl -L -o /tmp/taiga-contrib-saml-auth.tgz https://github.com/jgiannuzzi/taiga-contrib-saml-auth/archive/1.1.0.tar.gz
   tar -x -f /tmp/taiga-contrib-saml-auth.tgz --strip-components=3 -C /usr/src/taiga-front-dist/dist/plugins/saml-auth taiga-contrib-saml-auth-1.1.0/front/dist
-  pip install taiga-contrib-ldap-auth-ext
+  pip install taiga-contrib-ldap-auth-ext==0.4.4
 }
 
 prepare_system
