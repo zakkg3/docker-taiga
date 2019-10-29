@@ -120,7 +120,7 @@ if os.getenv("LDAP_AUTH_ENABLE").lower() == "true":
   LDAP_PORT = int(os.getenv("LDAP_PORT"))
 
   # Flag to enable LDAP with STARTTLS before bind
-  LDAP_START_TLS = os.getenv("LDAP_START_TLS")
+  LDAP_START_TLS = True if os.getenv("LDAP_START_TLS").lower() == "true" else False
 
   # Full DN of the service account use to connect to LDAP server and search for login user's account entry
   # If LDAP_BIND_DN is not specified, or is blank, then an anonymous bind is attempated
@@ -143,4 +143,5 @@ if os.getenv("LDAP_AUTH_ENABLE").lower() == "true":
 ## SLACK Integration
 #########################################
 
-INSTALLED_APPS += ["taiga_contrib_slack"]
+if os.getenv("SLACK_INTEGRATION_ENABLE").lower() == "true":
+  INSTALLED_APPS += ["taiga_contrib_slack"]

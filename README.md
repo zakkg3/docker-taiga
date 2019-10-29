@@ -149,10 +149,11 @@ these additional arguments to your `docker run` command.
 
 - `-e LDAP_AUTH_ENABLE=True`
 - `-e LDAP_BIND_DN=<bind account dn>`
+- `-e LDAP_BIND_PASSWORD=<bind password>`
 - `-e LDAP_SEARCH_BASE=<base>` 
 - `-e LDAP_SERVER=ldap://<ldap_server_host_name>`
 
-Other LDAP option can take a look at plugin docs <https://github.com/ensky/taiga-contrib-ldap-auth>
+Other LDAP option can take a look at plugin docs <https://github.com/Monogramm/taiga-contrib-ldap-auth-ext>
 
 
 ## Configuring integrations

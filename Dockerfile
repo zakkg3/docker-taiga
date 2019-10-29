@@ -26,7 +26,8 @@ ENV \
   RABBIT_HOST="rabbit:5672" \
   REDIS_HOST="redis:6379" \
   SAML_AUTH_ENABLE="False" \
-  SAML_AUTH_JSON_CONFIG=""\
+  SAML_AUTH_JSON_CONFIG="" \
+  SLACK_INTEGRATION_ENABLE="False" \
   LOGIN_FORM_TYPE="normal" \
   LDAP_AUTH_ENABLE="False" \
   LDAP_SERVER='ldap://ldap.example.com' \
