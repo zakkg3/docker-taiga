@@ -10,5 +10,6 @@
     "privacyPolicyUrl": null,
     "termsOfServiceUrl": null,
     "maxUploadFileSize": null,
-    "contribPlugins": [ ${CONTRIB_PLUGINS_LIST} ]
+    "contribPlugins": [ ${CONTRIB_PLUGINS_LIST} ],
+    "loginFormType": "${LOGIN_FORM_TYPE}"
 }
