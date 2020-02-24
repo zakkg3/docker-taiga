@@ -39,7 +39,8 @@ ENV \
   LDAP_SEARCH_FILTER_ADDITIONAL='(mail=*)' \
   LDAP_USERNAME_ATTRIBUTE='uid' \
   LDAP_EMAIL_ATTRIBUTE='mail' \
-  LDAP_FULL_NAME_ATTRIBUTE='displayName'
+  LDAP_FULL_NAME_ATTRIBUTE='displayName' \
+  DEBUG='False'
 
  
 ### Setup system

@@ -1,3 +1,15 @@
+# Hog to use this fork:
+
+Change your username in hub.docker.com on the makefile.
+Then
+
+      make all
+      
+its meant to use the helmchart at https://github.com/zakkg3/helm-taiga
+
+It uses a configmap to easily modify the local.py file from te values file.
+
+
 # What is Taiga?
 
 Taiga is a project management platform for startups and agile developers & designers who want a simple, beautiful tool that makes work truly enjoyable.
