@@ -104,17 +104,22 @@ EOF
     CONTRIB_PLUGINS_LIST="${CONTRIB_PLUGINS_LIST:-} \"/plugins/slack/slack.json\""
   fi
 
+  #debug_mode?
+  if grep -q -i true <<<${DEBUG:-}; then
+    echo "Debug is enabled"
+    export DEBUG="True"   
+  fi
+
   # Prepare plugins variable
   local CONTRIB_PLUGINS=$(python -c 'import sys; print(", ".join( list(filter(None,sys.argv[1:])) ))' ${CONTRIB_PLUGINS_LIST:-})
 
   # Template out configuration files
   local NGINX_ENVSUBST_VARIABLES='${NGINX_SHARDS_DIR} ${TAIGA_EVENTS_HOSTNAME}'
-  local BACK_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME}'
+  local BACK_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME} ${DEBUG}'
   local FRONT_ENVSUBST_VARIABLES='${URL_HTTP_SCHEME} ${URL_WS_SCHEME} ${TAIGA_HOSTNAME} ${URL_TAIGA_EVENTS} ${CONTRIB_PLUGINS_LIST} ${LOGIN_FORM_TYPE}'
   mkdir -p /etc/nginx/conf.d "${NGINX_SHARDS_DIR}"
   envsubst "${NGINX_ENVSUBST_VARIABLES}" <${NGINX_CONFIG_SOURCE}                   >${NGINX_CONFIG}
-  #envsubst "${BACK_ENVSUBST_VARIABLES}"  </opt/taiga-conf/taiga/local.py           >${BACK_LOCAL_CONFIG}
-  # Commented to allow mount configmap. aniway this iwll import from .docker *: next line.
+  envsubst "${BACK_ENVSUBST_VARIABLES}"  </opt/taiga-conf/taiga/local.py           >${BACK_LOCAL_CONFIG}
   envsubst "${BACK_ENVSUBST_VARIABLES}"  </opt/taiga-conf/taiga/docker-settings.py >${BACK_DOCKER_CONFIG}
   envsubst "${FRONT_ENVSUBST_VARIABLES}" </opt/taiga-conf/taiga/conf.json          >${FRONT_CONFIG}
   for shard in ${NGINX_SHARDS_LIST}; do
